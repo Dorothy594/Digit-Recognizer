@@ -1,0 +1,67 @@
+import pandas as pd
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from sklearn.model_selection import train_test_split
+import os
+
+# 步骤1: 从Excel中加载数据
+# data = pd.read_excel("D:\Digit Recognizer\digit-recognizer\train.csv")
+
+# 假设包含制表符的路径
+# path_with_tab = "C:\example\folder\target_file.txt"
+path_to_csv = r"D:\Digit Recognizer\digit-recognizer\train.csv"
+data = pd.read_csv(path_to_csv)
+
+# 使用os.path来处理路径
+# print(os.path.exists(path_with_tab))  # 检查路径是否存在
+# route = os.path.dirname(path_with_tab)
+# data = pd.read_excel(path_with_tab)
+
+# 步骤2: 数据预处理
+# 假设Excel文件中包含图像数据的像素值列，以及标签列
+X = data.drop("label", axis=1).values
+y = data["label"].values
+
+# 归一化像素值
+X = X / 255.0
+
+# 步骤3: 划分数据为训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 步骤4: 构建深度学习模型
+model = keras.Sequential([
+    keras.layers.Input(shape=(784,)),  # 28x28像素的图像
+    keras.layers.Dense(128, activation='relu'),
+    keras.layers.Dense(10, activation='softmax')  # 10个数字类别
+])
+
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# 步骤5: 模型训练
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
+
+# 步骤6: 模型评估
+test_loss, test_accuracy = model.evaluate(X_test, y_test)
+print("Test accuracy:", test_accuracy)
+
+# 步骤7: 推理
+# 这里可以输入新的手写数字图像到模型中进行预测
+path_to_test_csv = r"D:\Digit Recognizer\digit-recognizer\test.csv"
+test_data = pd.read_csv(path_to_test_csv)
+
+# 归一化测试数据
+X_test_data = test_data.values / 255.0
+
+# 使用模型进行预测
+predictions = model.predict(X_test_data)
+
+# 获取每个测试样本的预测结果（这里假设您想要的是具体的数字类别）
+predicted_labels = np.argmax(predictions, axis=1)
+
+# 将预测结果保存到一个文件
+output_df = pd.DataFrame({'ImageId': range(1, len(predicted_labels) + 1), 'Label': predicted_labels})
+output_df.to_csv('submission.csv', index=False, mode='w')
+
+
+  accuracy: 97%
